@@ -9,7 +9,6 @@ using namespace std;
 #define NROWSLINE 1
 #define BASE 10
 
-// Requires 5 +/- 1s to load
 
 // Returns -1 if TStr does not contain a valid number
 // Otherwise returns the number
@@ -45,8 +44,8 @@ void extractHeaders(TSsParser &parser, int &numCols, int &numRows) {
   }
 }
 
-// Loads data from DATAFILE into matrix
-void load(TVVec<TInt> &matrix) {
+// Loads data from DATAFILE into matrix, requires 5 +/- 1s to load
+void load(TVVec<TPair<TInt, TInt> > &matrix) {
   TSsParser parser(DATAFILE, ' ');
   int numCols = -1, numRows = -1;
   extractHeaders(parser, numCols, numRows);
@@ -60,27 +59,32 @@ void load(TVVec<TInt> &matrix) {
     for (int curCol = 0; curCol < numCols; curCol++) {
       // printf("%s\n", parser.GetFld(curCol));
       // ceil(atof(x)) returns the ceiling of a string represented in sci-notation as an int.
-      matrix.PutXY(curCol, curRow, ceil(atof(parser.GetFld(curCol))));
+      // "init" represents initial count of individuals occupying coordinate (curCol, curRow)
+      int init = ceil(atof(parser.GetFld(curCol)));
+      TPair<TInt, TInt> initPair(init, init);
+      matrix.PutXY(curCol, curRow, initPair);
     }
     // if (curRow % 500 == 0) printf("Row %d completed!\n", curRow);
   }
 }
 
-void print(TVVec<TInt> &matrix) {
+void print(TVVec<TPair<TInt, TInt> > &matrix) {
   int numRows = matrix.GetYDim(), numCols = matrix.GetXDim();
   for (int i = 0; i < numRows; i++) {
     for (int j = 0; j < numCols; j++) {
-      printf("%d ", matrix.GetXY(j, i).Val);
+      TInt numRemaining, numInitial;
+      (matrix.GetXY(j, i)).GetVal(numRemaining, numInitial);
+      // numRemaining() converts TInt to int, quiets compiler
+      printf("(%d, %d) ", numRemaining(), numInitial());
     }
     printf("\n");
   }
 }
 
 int main(int argc, char* argv[]) {
-  TVVec<TInt> matrix(0, 0);
-  load(matrix); // import data
+  TVVec<TPair<TInt, TInt> > matrix(0, 0);
+  load(matrix);
   // print(matrix);
-
 
   // long vector with 32-bit integer values and 64-bit indices:
   // TVec<TInt, TUInt64> vect();
