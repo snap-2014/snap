@@ -1,0 +1,10 @@
+--------
+/lfs/madmax2/0/deng/snap/examples/deng/main.Err
+Wed Jun 25 13:38:24 2014
+Execution stopped: !IsNode(NId) [Reason:'NodeId 1 already exists'], file graph.cpp, line 212
+--------
+--------
+/lfs/madmax2/0/deng/snap/examples/deng/main.Err
+Wed Jun 25 13:39:23 2014
+Execution stopped: !IsNode(NId) [Reason:'NodeId 1 already exists'], file graph.cpp, line 212
+--------

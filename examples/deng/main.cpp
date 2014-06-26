@@ -1,10 +1,68 @@
+#include <algorithm>
+#include <iterator>
+#include <cstdlib> // strtol
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "stdafx.h"
 using namespace std;
 
+#define DATAFILE "/dfs/ilfs2/0/deng/data/glp00ag.asc"
+#define NUM_FRIENDS 128
+
+// Requires 15 +/- 1s to load
+
+void load(TVVec<TInt> &matrix) {
+  ifstream infile(DATAFILE);
+  string strNRows, strNCols, strXLLCorner, strYLLCorner, strCellSize, strValue;
+  getline(infile, strNCols);
+  getline(infile, strNRows);
+  getline(infile, strXLLCorner); // unused
+  getline(infile, strYLLCorner); // unused
+  getline(infile, strCellSize);  // unused
+  getline(infile, strValue);     // unused
+
+  int numCols = strtol((strNCols.substr(strlen("ncols"))).c_str(), NULL, 10);
+  int numRows = strtol((strNRows.substr(strlen("ntows"))).c_str(), NULL, 10);
+
+  matrix.Gen(numCols, numRows);
+
+  string strCurRow;
+  for (int r = 0; r < numRows; r++) {
+    getline(infile, strCurRow);
+    istringstream iss(strCurRow);
+    vector<string> tokens;
+    copy(istream_iterator<string>(iss), istream_iterator<string>(),
+      back_inserter<vector<string> >(tokens));
+    for (int c = 0; c < numCols; c++) {
+      matrix.PutXY(c, r, strtol(tokens[c].c_str(), NULL, 10));
+    }
+    // if (r % 500 == 0) cout << "Row " << r << " completed!" << endl;
+  }
+}
+
+void print(TVVec<TInt> &matrix) {
+  int numRows = matrix.GetYDim(), numCols = matrix.GetXDim();
+
+  for (int i = 0; i < numRows; i++) {
+    for (int j = 0; j < numCols; j++) {
+      cout << matrix.GetXY(j, i).Val << " ";
+    }
+    cout << endl;
+  }
+}
 
 int main(int argc, char* argv[]) {
-  // #define NUM_FRIENDS 128
+  TVVec<TInt> matrix(0, 0);
+  load(matrix);
+  // print(matrix);
+
+
+  // long vector with 32-bit integer values and 64-bit indices:
+  // TVec<TInt, TUInt64> vect();
 
   // Import data
 
