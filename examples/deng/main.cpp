@@ -1,70 +1,90 @@
-#include <algorithm>
-#include <iterator>
+#include <cmath>
 #include <cstdlib> // strtol
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include "stdafx.h"
 using namespace std;
 
 #define DATAFILE "/dfs/ilfs2/0/deng/data/glp00ag.asc"
-#define NUM_FRIENDS 128
+#define HEADERLINES 6
+#define NCOLSLINE 0
+#define NROWSLINE 1
+#define BASE 10
 
-// Requires 15 +/- 1s to load
+// Requires 5 +/- 1s to load
 
+// Returns -1 if TStr does not contain a valid number
+// Otherwise returns the number
+int extractNum(const char* nptr) {
+  char end[16];
+  char* endptr = end;
+  long int result = strtol(nptr, &endptr, BASE);
+  if (strcmp(endptr, "\0") == 0) {
+    return result;
+  } else {
+    return -1;
+  }
+}
+
+// TODO: Returns true if numCols and numRows populate, otherwise returns false
+// Extracts the values of numCols and numRows from the header of the *.asc file
+// specified by DATAFILE. Also consumes remaining header lines.
+void extractHeaders(TSsParser &parser, int &numCols, int &numRows) {
+  for (int line = 0; line < HEADERLINES; line++) {
+    parser.Next();
+    if (line == NCOLSLINE) {
+      for (int i = 0; i < parser.Len(); i++) {
+        int result = extractNum(parser.GetFld(i));
+        if (result > 0) { numCols = result; }
+      }
+    }
+    else if (line == NROWSLINE) {
+      for (int i = 0; i < parser.Len(); i++) {
+        int result = extractNum(parser.GetFld(i));
+        if (result > 0) { numRows = result; }
+      }
+    }
+  }
+}
+
+// Loads data from DATAFILE into matrix
 void load(TVVec<TInt> &matrix) {
-  ifstream infile(DATAFILE);
-  string strNRows, strNCols, strXLLCorner, strYLLCorner, strCellSize, strValue;
-  getline(infile, strNCols);
-  getline(infile, strNRows);
-  getline(infile, strXLLCorner); // unused
-  getline(infile, strYLLCorner); // unused
-  getline(infile, strCellSize);  // unused
-  getline(infile, strValue);     // unused
+  TSsParser parser(DATAFILE, ' ');
+  int numCols = -1, numRows = -1;
+  extractHeaders(parser, numCols, numRows);
+  // printf("(%d, %d)\n", numRows, numCols);
 
-  int numCols = strtol((strNCols.substr(strlen("ncols"))).c_str(), NULL, 10);
-  int numRows = strtol((strNRows.substr(strlen("ntows"))).c_str(), NULL, 10);
-
+  // Resize matrix to contain ensuing data
   matrix.Gen(numCols, numRows);
 
-  string strCurRow;
-  for (int r = 0; r < numRows; r++) {
-    getline(infile, strCurRow);
-    istringstream iss(strCurRow);
-    vector<string> tokens;
-    copy(istream_iterator<string>(iss), istream_iterator<string>(),
-      back_inserter<vector<string> >(tokens));
-    for (int c = 0; c < numCols; c++) {
-      matrix.PutXY(c, r, strtol(tokens[c].c_str(), NULL, 10));
+  for (int curRow = 0; curRow < numRows; curRow++) {
+    parser.Next();
+    for (int curCol = 0; curCol < numCols; curCol++) {
+      // printf("%s\n", parser.GetFld(curCol));
+      // ceil(atof(x)) returns the ceiling of a string represented in sci-notation as an int.
+      matrix.PutXY(curCol, curRow, ceil(atof(parser.GetFld(curCol))));
     }
-    // if (r % 500 == 0) cout << "Row " << r << " completed!" << endl;
+    // if (curRow % 500 == 0) printf("Row %d completed!\n", curRow);
   }
 }
 
 void print(TVVec<TInt> &matrix) {
   int numRows = matrix.GetYDim(), numCols = matrix.GetXDim();
-
   for (int i = 0; i < numRows; i++) {
     for (int j = 0; j < numCols; j++) {
-      cout << matrix.GetXY(j, i).Val << " ";
+      printf("%d ", matrix.GetXY(j, i).Val);
     }
-    cout << endl;
+    printf("\n");
   }
 }
 
 int main(int argc, char* argv[]) {
   TVVec<TInt> matrix(0, 0);
-  load(matrix);
+  load(matrix); // import data
   // print(matrix);
 
 
   // long vector with 32-bit integer values and 64-bit indices:
   // TVec<TInt, TUInt64> vect();
 
-  // Import data
 
   // Initalize 2D vector of bucket structs containing two ints: "numRemaining"
   // and "numInitial". Each value should be initialized to the count specified
